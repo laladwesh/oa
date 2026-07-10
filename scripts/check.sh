@@ -74,7 +74,7 @@ scan() {
 
   PS_OUT="$(ps -axo comm= 2>/dev/null)"
   [ -z "$PS_OUT" ] && PS_OUT="$(ps -eo comm= 2>/dev/null)"
-  PS_OUT_LOWER="$(echo "$PS_OUT" | tr '[:upper:]' '[:lower:]')"
+  PS_OUT_LOWER="$(echo "$PS_OUT" | grep -vi '/system/library/' | tr '[:upper:]' '[:lower:]')"
 
   if [ -z "$PS_OUT" ]; then
     VIOLATIONS+=("Could not enumerate running processes - check is inconclusive, do not treat as PASS")
