@@ -146,15 +146,48 @@ print_banner() {
 scan
 print_banner
 
+# Many remote-access tools (Parsec, TeamViewer, AnyDesk, ...) install a
+# macOS LaunchAgent/LaunchDaemon that auto-relaunches the app the instant
+# it's killed - that's specifically why they behave that way, so the remote
+# session survives a manual force-quit. A plain `pkill` alone won't stick;
+# the watchdog has to be disabled first or the process just comes back.
+disable_launch_items() {
+  local pattern="$1"
+  local dir domain plist base
+  for dir_domain in "$HOME/Library/LaunchAgents:user" "/Library/LaunchAgents:system" "/Library/LaunchDaemons:system"; do
+    dir="${dir_domain%%:*}"
+    domain="${dir_domain#*:}"
+    [ -d "$dir" ] || continue
+    for plist in "$dir"/*.plist; do
+      [ -e "$plist" ] || continue
+      base="$(basename "$plist" | tr '[:upper:]' '[:lower:]')"
+      if echo "$base" | grep -qiw "$pattern"; then
+        echo "  Also disabling auto-restart watchdog: $(basename "$plist")"
+        if [ "$domain" = "system" ]; then
+          sudo launchctl unload -w "$plist" 2>/dev/null || true
+          sudo mv "$plist" "$plist.disabled" 2>/dev/null || true
+        else
+          launchctl unload -w "$plist" 2>/dev/null || true
+          mv "$plist" "$plist.disabled" 2>/dev/null || true
+        fi
+      fi
+    done
+  done
+}
+
 if [ "$PASSED" = false ] && [ -r /dev/tty ] && { [ "${#FIXABLE_PROC_PATTERNS[@]}" -gt 0 ] || [ "${#FIXABLE_APP_NAMES[@]}" -gt 0 ]; }; then
-  echo "${YELLOW}Fixable automatically: force-quitting the apps above (save your work first)"
-  echo "and moving installed-but-not-running apps to Trash (recoverable). Nothing"
-  echo "else on this Mac/Linux machine is touched.${RESET}"
+  echo "${YELLOW}Fixable automatically: force-quitting the apps above (save your work first),"
+  echo "disabling any auto-restart watchdog (may prompt for your Mac password for"
+  echo "system-level ones), and moving installed-but-not-running apps to Trash"
+  echo "(recoverable). Nothing else on this Mac/Linux machine is touched.${RESET}"
   read -p "Attempt to fix these automatically now? [y/N] " -r choice < /dev/tty || choice=""
   if [[ "$choice" =~ ^[Yy] ]]; then
     for pattern in "${FIXABLE_PROC_PATTERNS[@]:-}"; do
       [ -z "$pattern" ] && continue
       echo "Fixing: closing process matching '$pattern'"
+      if [ "$OS_NAME" = "Darwin" ]; then
+        disable_launch_items "$pattern"
+      fi
       pkill -9 -i -f "$pattern" 2>/dev/null || true
     done
     if [ "$OS_NAME" = "Darwin" ]; then
