@@ -185,5 +185,14 @@ if command -v curl >/dev/null 2>&1; then
   curl -s -m 5 -X POST -H "Content-Type: application/json" -d "$BODY" "$REPORT_URL" >/dev/null 2>&1 || true
 fi
 
+# Keep the window open so the invigilator has time to read the banner,
+# instead of it vanishing the instant the script finishes (e.g. when
+# launched via a double-clickable script or a Terminal profile that closes
+# on exit). Skipped if there's no real interactive terminal attached, so
+# this never hangs a non-interactive run.
+if [ -r /dev/tty ]; then
+  read -p "Press Enter to close this window... " -r _ < /dev/tty || true
+fi
+
 [ "$PASSED" = false ] && exit 1
 exit 0

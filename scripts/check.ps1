@@ -206,5 +206,14 @@ try {
   Invoke-RestMethod -Uri $ReportUrl -Method Post -Body $json -ContentType "application/json" -TimeoutSec 5 | Out-Null
 } catch {}
 
+# Keep the window open so the invigilator has time to read the banner,
+# instead of it vanishing the instant the script finishes (e.g. when
+# launched via a shortcut/batch file without -NoExit). Skipped if there's
+# no real interactive console attached, so this never hangs a non-interactive run.
+if (-not [Console]::IsInputRedirected) {
+  Write-Host "Press Enter to close this window..." -ForegroundColor Gray
+  Read-Host | Out-Null
+}
+
 if (-not $passed) { exit 1 }
 exit 0
