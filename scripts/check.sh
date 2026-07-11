@@ -9,59 +9,33 @@ set -u
 REPORT_URL="${OA_REPORT_URL:-__REPORT_URL__}"
 OS_NAME="$(uname -s)"
 
-PROCESS_PATTERNS=(
-  "teamviewer:TeamViewer"
-  "anydesk:AnyDesk"
-  "remoting_host:Chrome Remote Desktop"
-  "splashtop:Splashtop"
-  "rustdesk:RustDesk"
-  "parsec:Parsec"
-  "logmein:LogMeIn"
-  "gotomypc:GoToMyPC"
-  "g2comm:GoToMyPC"
-  "zohoassist:Zoho Assist"
-  "vncserver:VNC"
-  "vncviewer:VNC"
-  "winvnc:VNC"
-  "tightvnc:TightVNC"
-  "ultravnc:UltraVNC"
-  "realvnc:RealVNC"
-  "ardagent:Apple Remote Desktop"
-  "screensharingd:macOS Screen Sharing (active)"
-  "sshd:Remote Login / SSH"
-  "microsoft remote desktop:Microsoft Remote Desktop"
-  "zoom.us:Zoom"
-  "zoomcptsvc:Zoom"
-  "teams:Microsoft Teams"
-  "webex:Webex"
-  "ptrecorder:Webex"
-  "skype:Skype"
-  "discord:Discord"
-  "slack:Slack"
-  "quicktime player:QuickTime Player (screen recording)"
-)
+# The actual list of checked apps isn't kept as plain text in this file -
+# base64-encoded below, decoded at runtime. This does not stop someone who
+# deliberately decodes it (`base64 -d`), only casual reading of a curl'd file.
+_PP_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpyZW1vdGluZ19ob3N0OkNocm9tZSBSZW1vdGUgRGVza3RvcApzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCmcyY29tbTpHb1RvTXlQQwp6b2hvYXNzaXN0OlpvaG8gQXNzaXN0CnZuY3NlcnZlcjpWTkMKdm5jdmlld2VyOlZOQwp3aW52bmM6Vk5DCnRpZ2h0dm5jOlRpZ2h0Vk5DCnVsdHJhdm5jOlVsdHJhVk5DCnJlYWx2bmM6UmVhbFZOQwphcmRhZ2VudDpBcHBsZSBSZW1vdGUgRGVza3RvcApzY3JlZW5zaGFyaW5nZDptYWNPUyBTY3JlZW4gU2hhcmluZyAoYWN0aXZlKQpzc2hkOlJlbW90ZSBMb2dpbiAvIFNTSAptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb20udXM6Wm9vbQp6b29tY3B0c3ZjOlpvb20KdGVhbXM6TWljcm9zb2Z0IFRlYW1zCndlYmV4OldlYmV4CnB0cmVjb3JkZXI6V2ViZXgKc2t5cGU6U2t5cGUKZGlzY29yZDpEaXNjb3JkCnNsYWNrOlNsYWNrCnF1aWNrdGltZSBwbGF5ZXI6UXVpY2tUaW1lIFBsYXllciAoc2NyZWVuIHJlY29yZGluZykK"
+_AL_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCnpvaG8gYXNzaXN0OlpvaG8gQXNzaXN0CnJlYWx2bmM6UmVhbFZOQwp0aWdodHZuYzpUaWdodFZOQwp1bHRyYXZuYzpVbHRyYVZOQwptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb206Wm9vbQptaWNyb3NvZnQgdGVhbXM6TWljcm9zb2Z0IFRlYW1zCndlYmV4OldlYmV4CnNreXBlOlNreXBlCmRpc2NvcmQ6RGlzY29yZApzbGFjazpTbGFjawpxdWlja3RpbWUgcGxheWVyOlF1aWNrVGltZSBQbGF5ZXIgKHNjcmVlbiByZWNvcmRpbmcpCg=="
 
-APP_LABELS=(
-  "teamviewer:TeamViewer"
-  "anydesk:AnyDesk"
-  "splashtop:Splashtop"
-  "rustdesk:RustDesk"
-  "parsec:Parsec"
-  "logmein:LogMeIn"
-  "gotomypc:GoToMyPC"
-  "zoho assist:Zoho Assist"
-  "realvnc:RealVNC"
-  "tightvnc:TightVNC"
-  "ultravnc:UltraVNC"
-  "microsoft remote desktop:Microsoft Remote Desktop"
-  "zoom:Zoom"
-  "microsoft teams:Microsoft Teams"
-  "webex:Webex"
-  "skype:Skype"
-  "discord:Discord"
-  "slack:Slack"
-  "quicktime player:QuickTime Player (screen recording)"
-)
+# base64 -d is GNU (Linux); macOS/BSD base64 uses -D. Try both.
+_b64decode() {
+  local out
+  out="$(printf '%s' "$1" | base64 -d 2>/dev/null)"
+  [ -z "$out" ] && out="$(printf '%s' "$1" | base64 -D 2>/dev/null)"
+  printf '%s' "$out"
+}
+
+PROCESS_PATTERNS=()
+while IFS= read -r _line; do
+  [ -n "$_line" ] && PROCESS_PATTERNS+=("$_line")
+done <<EOF
+$(_b64decode "$_PP_B64")
+EOF
+
+APP_LABELS=()
+while IFS= read -r _line; do
+  [ -n "$_line" ] && APP_LABELS+=("$_line")
+done <<EOF
+$(_b64decode "$_AL_B64")
+EOF
 
 # Populates the global VIOLATIONS array. FIXABLE_PROC_PATTERNS collects the
 # raw process-name patterns worth killing; FIXABLE_APP_NAMES collects the
