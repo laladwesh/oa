@@ -7,7 +7,6 @@ services:
     environment:
       NODE_ENV: production
       PORT: 6021
-      PUBLIC_URL: https://iitg.ac.in
       # Use MongoDB running on host machine (systemd mongod)
       MONGO_URI: mongodb://127.0.0.1:27017/oa_checker
     env_file:

@@ -9,13 +9,12 @@ const Stats = require('./models/Stats');
 const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/oa_checker';
 const ADMIN_KEY = process.env.ADMIN_KEY;
-// Base origin (scheme + host, no path) this server is reachable at from a
-// candidate's laptop. Used only to tell the check scripts where to send
-// their pass/fail ping. Defaults to plain localhost for local dev.
-const PUBLIC_URL = process.env.PUBLIC_URL || `http://localhost:${PORT}`;
-const REPORT_URL = `${PUBLIC_URL}/oa-check/report`;
 
 const app = express();
+// Trust the X-Forwarded-* headers Nginx sets, so req.protocol reflects the
+// scheme the candidate actually used (http vs https), not the internal
+// Nginx-to-Node hop (which is always plain http).
+app.set('trust proxy', true);
 app.use(express.json());
 
 const router = express.Router();
@@ -24,10 +23,32 @@ router.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// A real browser's User-Agent always contains "Mozilla" plus a rendering
+// engine token; curl, PowerShell's Invoke-RestMethod/iwr, and wget don't
+// look like that. Used to stop students who paste the URL directly into a
+// browser from getting a nicely rendered view of the whole script - it does
+// nothing against someone deliberately running curl themselves, which is
+// unavoidable for any script that has to execute on their own machine.
+function looksLikeBrowser(ua) {
+  return /mozilla/i.test(ua) && /chrome|safari|firefox|edg|opr/i.test(ua) &&
+    !/powershell|curl|wget/i.test(ua);
+}
+
 function serveScript(scriptFile, contentType) {
   return (req, res) => {
+    const ua = req.get('user-agent') || '';
+    if (looksLikeBrowser(ua)) {
+      return res
+        .type('text/plain')
+        .status(200)
+        .send('Run the command your invigilator gave you from a Terminal (Mac/Linux) or PowerShell (Windows) window - this page does nothing on its own.');
+    }
+    // Derive the report URL from whatever host/scheme the candidate actually
+    // used to fetch this script, instead of a fixed env var - that way it's
+    // always correct regardless of which domain/IP points at this server.
+    const reportUrl = `${req.protocol}://${req.get('host')}/oa-check/report`;
     const raw = fs.readFileSync(path.join(__dirname, 'scripts', scriptFile), 'utf8');
-    res.type(contentType).send(raw.replace('__REPORT_URL__', REPORT_URL));
+    res.type(contentType).send(raw.replace('__REPORT_URL__', reportUrl));
   };
 }
 
