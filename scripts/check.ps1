@@ -3,53 +3,24 @@
 # explicitly opts into the fix-it prompt below (defaults to No).
 $ReportUrl = if ($env:OA_REPORT_URL) { $env:OA_REPORT_URL } else { "__REPORT_URL__" }
 
-$processLabels = @{
-  "teamviewer"       = "TeamViewer"
-  "anydesk"          = "AnyDesk"
-  "remoting_host"    = "Chrome Remote Desktop"
-  "splashtop"        = "Splashtop"
-  "rustdesk"         = "RustDesk"
-  "parsec"           = "Parsec"
-  "logmein"          = "LogMeIn"
-  "g2comm"           = "GoToMyPC"
-  "g2svc"            = "GoToMyPC"
-  "zaservice"        = "Zoho Assist"
-  "vncserver"        = "VNC"
-  "winvnc"           = "VNC"
-  "tvnserver"        = "TightVNC"
-  "ultravnc"         = "UltraVNC"
-  "vncviewer"        = "VNC"
-  "mstsc"            = "Remote Desktop Connection (client)"
-  "quickassist"      = "Microsoft Quick Assist"
-  "zoom"             = "Zoom"
-  "teams"            = "Microsoft Teams"
-  "webexmta"         = "Webex"
-  "atmgr"            = "Webex"
-  "skype"            = "Skype"
-  "discord"          = "Discord"
-  "slack"            = "Slack"
+# The actual list of checked apps isn't kept as plain text in this file -
+# base64-encoded below, decoded at runtime. This does not stop someone who
+# deliberately decodes it, only casual reading of a curl'd/downloaded file.
+function Decode-Labels($b64) {
+  $text = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($b64))
+  $table = @{}
+  foreach ($line in $text -split "`n") {
+    $line = $line.Trim()
+    if ($line -eq "") { continue }
+    $parts = $line -split "=", 2
+    $table[$parts[0]] = $parts[1]
+  }
+  return $table
 }
 
-$appLabels = @{
-  "teamviewer"                = "TeamViewer"
-  "anydesk"                   = "AnyDesk"
-  "splashtop"                 = "Splashtop"
-  "rustdesk"                  = "RustDesk"
-  "parsec"                    = "Parsec"
-  "logmein"                   = "LogMeIn"
-  "gotomypc"                  = "GoToMyPC"
-  "zoho assist"               = "Zoho Assist"
-  "realvnc"                   = "RealVNC"
-  "tightvnc"                  = "TightVNC"
-  "ultravnc"                  = "UltraVNC"
-  "microsoft remote desktop"  = "Microsoft Remote Desktop"
-  "zoom"                      = "Zoom"
-  "microsoft teams"           = "Microsoft Teams"
-  "webex"                     = "Webex"
-  "skype"                     = "Skype"
-  "discord"                   = "Discord"
-  "slack"                     = "Slack"
-}
+$processLabels = Decode-Labels "dGVhbXZpZXdlcj1UZWFtVmlld2VyCmFueWRlc2s9QW55RGVzawpyZW1vdGluZ19ob3N0PUNocm9tZSBSZW1vdGUgRGVza3RvcApzcGxhc2h0b3A9U3BsYXNodG9wCnJ1c3RkZXNrPVJ1c3REZXNrCnBhcnNlYz1QYXJzZWMKbG9nbWVpbj1Mb2dNZUluCmcyY29tbT1Hb1RvTXlQQwpnMnN2Yz1Hb1RvTXlQQwp6YXNlcnZpY2U9Wm9obyBBc3Npc3QKdm5jc2VydmVyPVZOQwp3aW52bmM9Vk5DCnR2bnNlcnZlcj1UaWdodFZOQwp1bHRyYXZuYz1VbHRyYVZOQwp2bmN2aWV3ZXI9Vk5DCm1zdHNjPVJlbW90ZSBEZXNrdG9wIENvbm5lY3Rpb24gKGNsaWVudCkKcXVpY2thc3Npc3Q9TWljcm9zb2Z0IFF1aWNrIEFzc2lzdAp6b29tPVpvb20KdGVhbXM9TWljcm9zb2Z0IFRlYW1zCndlYmV4bXRhPVdlYmV4CmF0bWdyPVdlYmV4CnNreXBlPVNreXBlCmRpc2NvcmQ9RGlzY29yZApzbGFjaz1TbGFjaw=="
+
+$appLabels = Decode-Labels "dGVhbXZpZXdlcj1UZWFtVmlld2VyCmFueWRlc2s9QW55RGVzawpzcGxhc2h0b3A9U3BsYXNodG9wCnJ1c3RkZXNrPVJ1c3REZXNrCnBhcnNlYz1QYXJzZWMKbG9nbWVpbj1Mb2dNZUluCmdvdG9teXBjPUdvVG9NeVBDCnpvaG8gYXNzaXN0PVpvaG8gQXNzaXN0CnJlYWx2bmM9UmVhbFZOQwp0aWdodHZuYz1UaWdodFZOQwp1bHRyYXZuYz1VbHRyYVZOQwptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A9TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb209Wm9vbQptaWNyb3NvZnQgdGVhbXM9TWljcm9zb2Z0IFRlYW1zCndlYmV4PVdlYmV4CnNreXBlPVNreXBlCmRpc2NvcmQ9RGlzY29yZApzbGFjaz1TbGFjaw=="
 
 $uninstallPaths = @(
   "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
