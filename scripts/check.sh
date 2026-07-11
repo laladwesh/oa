@@ -162,7 +162,22 @@ if [ "$PASSED" = false ] && [ -r /dev/tty ] && { [ "${#FIXABLE_PROC_PATTERNS[@]}
       if [ "$OS_NAME" = "Darwin" ]; then
         disable_launch_items "$pattern"
       fi
-      pkill -9 -i -f "$pattern" 2>/dev/null || true
+      # Some apps (Discord, Skype, ...) relaunch themselves within a second
+      # or two via a helper/updater/tray process even with no LaunchAgent
+      # involved. A single kill can lose that race, so kill-and-recheck a
+      # few times instead of trusting one shot.
+      attempt=0
+      while [ "$attempt" -lt 4 ]; do
+        pkill -9 -i -f "$pattern" 2>/dev/null || true
+        sleep 1
+        still_running=""
+        new_ps="$(ps -axo comm= 2>/dev/null)"
+        [ -z "$new_ps" ] && new_ps="$(ps -eo comm= 2>/dev/null)"
+        echo "$new_ps" | grep -vi '/system/library/' | grep -qiw "$pattern" && still_running=1
+        [ -z "$still_running" ] && break
+        attempt=$((attempt + 1))
+      done
+      [ -n "$still_running" ] && echo "  Still running after repeated attempts - may need manual quit or Administrator/root privileges."
     done
     if [ "$OS_NAME" = "Darwin" ]; then
       for appname in "${FIXABLE_APP_NAMES[@]:-}"; do

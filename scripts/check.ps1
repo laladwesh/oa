@@ -47,7 +47,7 @@ function Get-Scan {
       if ($matches.Count -gt 0) {
         $label = "$($processLabels[$key]) (process running)"
         $violations.Add($label)
-        $fixable[$label] = @{ kind = "process"; names = @($matches | Select-Object -ExpandProperty ProcessName -Unique) }
+        $fixable[$label] = @{ kind = "process"; names = @($matches | Select-Object -ExpandProperty ProcessName -Unique); pattern = $pattern }
       }
     }
   }
@@ -130,8 +130,28 @@ if (-not $passed -and $scan.fixable.Count -gt 0) {
       Write-Host "Fixing: $label" -ForegroundColor Yellow
       switch ($fix.kind) {
         "process" {
-          foreach ($name in $fix.names) {
-            try { Stop-Process -Name $name -Force -ErrorAction Stop } catch {}
+          # Some apps (Discord, Skype, ...) relaunch themselves within a
+          # second or two via a helper/updater/tray process. A single kill
+          # can lose that race, so kill-and-recheck a few times instead of
+          # trusting one shot. Also disables any matching Scheduled Task,
+          # since Squirrel-based installers (Discord, Slack, ...) sometimes
+          # register one for background updates/relaunch.
+          try {
+            Get-ScheduledTask -ErrorAction Stop | Where-Object { $_.TaskName -match $fix.pattern } | ForEach-Object {
+              Disable-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath -ErrorAction SilentlyContinue | Out-Null
+            }
+          } catch {}
+          $stillRunning = $true
+          for ($i = 0; $i -lt 4; $i++) {
+            foreach ($name in $fix.names) {
+              try { Stop-Process -Name $name -Force -ErrorAction Stop } catch {}
+            }
+            Start-Sleep -Seconds 1
+            $remaining = @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName.ToLower() -match $fix.pattern })
+            if ($remaining.Count -eq 0) { $stillRunning = $false; break }
+          }
+          if ($stillRunning) {
+            Write-Host "  Still running after repeated attempts - may need manual quit or Administrator PowerShell." -ForegroundColor Red
           }
         }
         "uninstall" {
