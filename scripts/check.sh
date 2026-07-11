@@ -120,11 +120,11 @@ print_banner() {
 scan
 print_banner
 
-# Many remote-access tools (Parsec, TeamViewer, AnyDesk, ...) install a
-# macOS LaunchAgent/LaunchDaemon that auto-relaunches the app the instant
-# it's killed - that's specifically why they behave that way, so the remote
-# session survives a manual force-quit. A plain `pkill` alone won't stick;
-# the watchdog has to be disabled first or the process just comes back.
+# Many remote-access tools install a macOS LaunchAgent/LaunchDaemon that
+# auto-relaunches the app the instant it's killed - that's specifically why
+# they behave that way, so the remote session survives a manual force-quit.
+# A plain `pkill` alone won't stick; the watchdog has to be disabled first
+# or the process just comes back.
 disable_launch_items() {
   local pattern="$1"
   local dir domain plist base
