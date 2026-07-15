@@ -9,6 +9,60 @@ set -u
 REPORT_URL="${OA_REPORT_URL:-__REPORT_URL__}"
 OS_NAME="$(uname -s)"
 
+RED_BG=$'\033[1;97;41m'
+RESET=$'\033[0m'
+
+_send_report() {
+  if command -v curl >/dev/null 2>&1; then
+    BODY=$(printf '{"platform":"%s","passed":false}' "$1")
+    curl -s -m 5 -X POST -H "Content-Type: application/json" -d "$BODY" "$REPORT_URL" >/dev/null 2>&1 || true
+  fi
+}
+
+# Hard environment check: this script only means anything on real macOS or
+# native Linux. WSL (Windows Subsystem for Linux) runs bash just fine but is
+# sandboxed away from the real Windows host's processes - a candidate running
+# this inside WSL on Windows would get a false PASS while actual
+# remote-access tools running natively on Windows stay completely invisible.
+# Same idea for MSYS/Cygwin/Git-Bash-on-Windows (uname reports MINGW*/CYGWIN*).
+_is_wsl=false
+if [ -f /proc/version ] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then
+  _is_wsl=true
+fi
+[ -n "${WSL_DISTRO_NAME:-}" ] && _is_wsl=true
+[ -n "${WSL_INTEROP:-}" ] && _is_wsl=true
+
+case "$OS_NAME" in
+  Darwin|Linux) ;;
+  *)
+    echo ""
+    echo "  CCD OA ENVIRONMENT CHECK"
+    echo ""
+    echo "${RED_BG}    WRONG ENVIRONMENT - THIS RESULT DOES NOT COUNT          ${RESET}"
+    echo ""
+    echo "This is the Mac/Linux check, but it detected '$OS_NAME', which is a"
+    echo "Windows-hosted shell (Git Bash/MSYS/Cygwin), not real macOS or Linux."
+    echo "It cannot see your actual Windows processes. Run the PowerShell"
+    echo "command your invigilator gave you instead."
+    _send_report "$OS_NAME (wrong-environment)"
+    exit 1
+    ;;
+esac
+
+if [ "$_is_wsl" = true ]; then
+  echo ""
+  echo "  CCD OA ENVIRONMENT CHECK"
+  echo ""
+  echo "${RED_BG}    WRONG ENVIRONMENT - THIS RESULT DOES NOT COUNT          ${RESET}"
+  echo ""
+  echo "This looks like WSL (Windows Subsystem for Linux). WSL cannot see your"
+  echo "real Windows processes, so a check run here is meaningless even if it"
+  echo "shows PASS. Run the PowerShell command your invigilator gave you"
+  echo "instead (irm ... | iex), not this one."
+  _send_report "WSL (wrong-environment)"
+  exit 1
+fi
+
 # The actual list of checked apps isn't kept as plain text in this file -
 # base64-encoded below, decoded at runtime. This does not stop someone who
 # deliberately decodes it (`base64 -d`), only casual reading of a curl'd file.
@@ -91,9 +145,7 @@ scan() {
 }
 
 GREEN_BG=$'\033[1;97;42m'
-RED_BG=$'\033[1;97;41m'
 YELLOW=$'\033[1;33m'
-RESET=$'\033[0m'
 BOLD=$'\033[1m'
 
 print_banner() {
@@ -162,10 +214,10 @@ if [ "$PASSED" = false ] && [ -r /dev/tty ] && { [ "${#FIXABLE_PROC_PATTERNS[@]}
       if [ "$OS_NAME" = "Darwin" ]; then
         disable_launch_items "$pattern"
       fi
-      # Some apps (Discord, Skype, ...) relaunch themselves within a second
-      # or two via a helper/updater/tray process even with no LaunchAgent
-      # involved. A single kill can lose that race, so kill-and-recheck a
-      # few times instead of trusting one shot.
+      # Some apps relaunch themselves within a second or two via a
+      # helper/updater/tray process even with no LaunchAgent involved. A
+      # single kill can lose that race, so kill-and-recheck a few times
+      # instead of trusting one shot.
       attempt=0
       while [ "$attempt" -lt 4 ]; do
         pkill -9 -i -f "$pattern" 2>/dev/null || true

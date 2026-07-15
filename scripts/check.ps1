@@ -3,6 +3,33 @@
 # explicitly opts into the fix-it prompt below (defaults to No).
 $ReportUrl = if ($env:OA_REPORT_URL) { $env:OA_REPORT_URL } else { "__REPORT_URL__" }
 
+# Hard environment check: PowerShell itself runs cross-platform (PowerShell
+# Core on Mac/Linux), so this script could technically execute somewhere its
+# Windows registry/RDP checks silently no-op - meaningless result. $IsWindows
+# only exists in PowerShell 6+; on Windows PowerShell 5.1 (the common case)
+# it's absent, so default to true there since 5.1 only ever runs on Windows.
+$isWinPlatform = $true
+if (Test-Path Variable:IsWindows) { $isWinPlatform = $IsWindows }
+if (-not $isWinPlatform) {
+  Write-Host ""
+  Write-Host "  CCD OA ENVIRONMENT CHECK"
+  Write-Host ""
+  Write-Host "                                                          " -ForegroundColor White -BackgroundColor DarkRed
+  Write-Host "    WRONG ENVIRONMENT - THIS RESULT DOES NOT COUNT         " -ForegroundColor White -BackgroundColor DarkRed
+  Write-Host "                                                          " -ForegroundColor White -BackgroundColor DarkRed
+  Write-Host ""
+  Write-Host "This is the Windows check, but it detected a non-Windows OS."
+  Write-Host "Registry-based checks here would silently do nothing, so a PASS"
+  Write-Host "would be meaningless. Run the curl command your invigilator gave"
+  Write-Host "you instead."
+  try {
+    $bodyObj = @{ platform = "non-Windows (wrong-environment)"; passed = $false }
+    $json = $bodyObj | ConvertTo-Json -Compress
+    Invoke-RestMethod -Uri $ReportUrl -Method Post -Body $json -ContentType "application/json" -TimeoutSec 5 | Out-Null
+  } catch {}
+  exit 1
+}
+
 # The actual list of checked apps isn't kept as plain text in this file -
 # base64-encoded below, decoded at runtime. This does not stop someone who
 # deliberately decodes it, only casual reading of a curl'd/downloaded file.
@@ -130,11 +157,10 @@ if (-not $passed -and $scan.fixable.Count -gt 0) {
       Write-Host "Fixing: $label" -ForegroundColor Yellow
       switch ($fix.kind) {
         "process" {
-          # Some apps (Discord, Skype, ...) relaunch themselves within a
-          # second or two via a helper/updater/tray process. A single kill
-          # can lose that race, so kill-and-recheck a few times instead of
-          # trusting one shot. Also disables any matching Scheduled Task,
-          # since Squirrel-based installers (Discord, Slack, ...) sometimes
+          # Some apps relaunch themselves within a second or two via a
+          # helper/updater/tray process. A single kill can lose that race,
+          # so kill-and-recheck a few times instead of trusting one shot.
+          # Also disables any matching Scheduled Task, since some installers
           # register one for background updates/relaunch.
           try {
             Get-ScheduledTask -ErrorAction Stop | Where-Object { $_.TaskName -match $fix.pattern } | ForEach-Object {
