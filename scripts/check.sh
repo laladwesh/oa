@@ -138,6 +138,13 @@ scan() {
         fi
       fi
     done
+
+    if command -v launchctl >/dev/null 2>&1; then
+      _ss_state="$(launchctl print system/com.apple.screensharing 2>/dev/null)"
+      if echo "$_ss_state" | grep -qE "state = (running|waiting)"; then
+        VIOLATIONS+=("macOS Screen Sharing is enabled in System Settings")
+      fi
+    fi
   fi
 
   PASSED=true
