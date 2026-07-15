@@ -67,7 +67,7 @@ fi
 # base64-encoded below, decoded at runtime. This does not stop someone who
 # deliberately decodes it (`base64 -d`), only casual reading of a curl'd file.
 _PP_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpyZW1vdGluZ19ob3N0OkNocm9tZSBSZW1vdGUgRGVza3RvcApzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCmcyY29tbTpHb1RvTXlQQwp6b2hvYXNzaXN0OlpvaG8gQXNzaXN0CnZuY3NlcnZlcjpWTkMKdm5jdmlld2VyOlZOQwp3aW52bmM6Vk5DCnRpZ2h0dm5jOlRpZ2h0Vk5DCnVsdHJhdm5jOlVsdHJhVk5DCnJlYWx2bmM6UmVhbFZOQwphcmRhZ2VudDpBcHBsZSBSZW1vdGUgRGVza3RvcApzY3JlZW5zaGFyaW5nZDptYWNPUyBTY3JlZW4gU2hhcmluZyAoYWN0aXZlKQpzc2hkOlJlbW90ZSBMb2dpbiAvIFNTSAptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb20udXM6Wm9vbQp6b29tY3B0c3ZjOlpvb20KdGVhbXM6TWljcm9zb2Z0IFRlYW1zCndlYmV4OldlYmV4CnB0cmVjb3JkZXI6V2ViZXgKc2t5cGU6U2t5cGUKZGlzY29yZDpEaXNjb3JkCnNsYWNrOlNsYWNrCnF1aWNrdGltZSBwbGF5ZXI6UXVpY2tUaW1lIFBsYXllciAoc2NyZWVuIHJlY29yZGluZykK"
-_AL_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCnpvaG8gYXNzaXN0OlpvaG8gQXNzaXN0CnJlYWx2bmM6UmVhbFZOQwp0aWdodHZuYzpUaWdodFZOQwp1bHRyYXZuYzpVbHRyYVZOQwptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb206Wm9vbQptaWNyb3NvZnQgdGVhbXM6TWljcm9zb2Z0IFRlYW1zCndlYmV4OldlYmV4CnNreXBlOlNreXBlCmRpc2NvcmQ6RGlzY29yZApzbGFjazpTbGFjawpxdWlja3RpbWUgcGxheWVyOlF1aWNrVGltZSBQbGF5ZXIgKHNjcmVlbiByZWNvcmRpbmcpCg=="
+_AL_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCnpvaG8gYXNzaXN0OlpvaG8gQXNzaXN0CnJlYWx2bmM6UmVhbFZOQwp0aWdodHZuYzpUaWdodFZOQwp1bHRyYXZuYzpVbHRyYVZOQwptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb206Wm9vbQptaWNyb3NvZnQgdGVhbXM6TWljcm9zb2Z0IFRlYW1zCndlYmV4OldlYmV4CnNreXBlOlNreXBlCmRpc2NvcmQ6RGlzY29yZApzbGFjazpTbGFjawo="
 
 # base64 -d is GNU (Linux); macOS/BSD base64 uses -D. Try both.
 _b64decode() {
@@ -143,6 +143,20 @@ scan() {
       _ss_state="$(launchctl print system/com.apple.screensharing 2>/dev/null)"
       if echo "$_ss_state" | grep -qE "state = (running|waiting)"; then
         VIOLATIONS+=("macOS Screen Sharing is enabled in System Settings")
+      fi
+      # Remote Login (SSH) is also socket-activated on macOS - the sshd
+      # process check above only catches an active connection, same gap as
+      # Screen Sharing had. Check whether it's enabled at all, not just
+      # mid-session right now.
+      _ssh_state="$(launchctl print system/com.openssh.sshd 2>/dev/null)"
+      if echo "$_ssh_state" | grep -qE "state = (running|waiting)"; then
+        already_ssh=0
+        if [ "${#VIOLATIONS[@]}" -gt 0 ]; then
+          for v in "${VIOLATIONS[@]}"; do
+            [ "$v" = "Remote Login / SSH (process running)" ] && already_ssh=1
+          done
+        fi
+        [ "$already_ssh" -eq 0 ] && VIOLATIONS+=("Remote Login / SSH is enabled in System Settings")
       fi
     fi
   fi
@@ -255,8 +269,9 @@ fi
 
 echo "Only running processes and installed apps on THIS machine were inspected."
 echo "No files, codebase, or personal data are read, uploaded, or stored."
-echo "AirPlay/Screen Mirroring, Sidecar, and Universal Control cannot be reliably"
-echo "checked from the command line and are NOT covered by this automated check."
+echo "AirPlay/Screen Mirroring, Sidecar, Universal Control, and browser-based"
+echo "tools (Google Meet, Whereby, etc.) cannot be reliably checked from the"
+echo "command line and are NOT covered by this automated check."
 echo ""
 
 # Anonymous aggregate ping only: platform + pass/fail. No violation details,
