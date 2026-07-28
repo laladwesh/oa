@@ -66,7 +66,7 @@ if [ "$_is_wsl" = true ]; then
   exit 1
 fi
 
-_PP_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpyZW1vdGluZ19ob3N0OkNocm9tZSBSZW1vdGUgRGVza3RvcApzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCmcyY29tbTpHb1RvTXlQQwp6b2hvYXNzaXN0OlpvaG8gQXNzaXN0CnZuY3NlcnZlcjpWTkMKdm5jdmlld2VyOlZOQwp3aW52bmM6Vk5DCnRpZ2h0dm5jOlRpZ2h0Vk5DCnVsdHJhdm5jOlVsdHJhVk5DCnJlYWx2bmM6UmVhbFZOQwphcmRhZ2VudDpBcHBsZSBSZW1vdGUgRGVza3RvcApzY3JlZW5zaGFyaW5nZDptYWNPUyBTY3JlZW4gU2hhcmluZyAoYWN0aXZlKQpzc2hkOlJlbW90ZSBMb2dpbiAvIFNTSAptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb20udXM6Wm9vbQp6b29tY3B0c3ZjOlpvb20Kd2ViZXg6V2ViZXgKcHRyZWNvcmRlcjpXZWJleApza3lwZTpTa3lwZQpkaXNjb3JkOkRpc2NvcmQKc2xhY2s6U2xhY2sKcXVpY2t0aW1lIHBsYXllcjpRdWlja1RpbWUgUGxheWVyIChzY3JlZW4gcmVjb3JkaW5nKQo="
+_PP_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCnRlYW12aWV3ZXJkOlRlYW1WaWV3ZXIKdGVhbXZpZXdlcl9zZXJ2aWNlOlRlYW1WaWV3ZXIKYW55ZGVzazpBbnlEZXNrCmFueWRlc2tfc2VydmljZTpBbnlEZXNrCnJlbW90aW5nX2hvc3Q6Q2hyb21lIFJlbW90ZSBEZXNrdG9wCnJlbW90aW5nX21lMm1lX2hvc3Q6Q2hyb21lIFJlbW90ZSBEZXNrdG9wCnNwbGFzaHRvcDpTcGxhc2h0b3AKcnVzdGRlc2s6UnVzdERlc2sKcGFyc2VjOlBhcnNlYwpsb2dtZWluOkxvZ01lSW4KZ290b215cGM6R29Ub015UEMKZzJjb21tOkdvVG9NeVBDCnpvaG9hc3Npc3Q6Wm9obyBBc3Npc3QKdm5jc2VydmVyOlZOQwp2bmN2aWV3ZXI6Vk5DCndpbnZuYzpWTkMKdGlnaHR2bmM6VGlnaHRWTkMKdWx0cmF2bmM6VWx0cmFWTkMKcmVhbHZuYzpSZWFsVk5DCmFyZGFnZW50OkFwcGxlIFJlbW90ZSBEZXNrdG9wCnNjcmVlbnNoYXJpbmdkOm1hY09TIFNjcmVlbiBTaGFyaW5nIChhY3RpdmUpCnNzaGQ6UmVtb3RlIExvZ2luIC8gU1NICm1pY3Jvc29mdCByZW1vdGUgZGVza3RvcDpNaWNyb3NvZnQgUmVtb3RlIERlc2t0b3AKem9vbS51czpab29tCnpvb21jcHRzdmM6Wm9vbQp3ZWJleDpXZWJleApwdHJlY29yZGVyOldlYmV4CnNreXBlOlNreXBlCmRpc2NvcmQ6RGlzY29yZApzbGFjazpTbGFjawpxdWlja3RpbWUgcGxheWVyOlF1aWNrVGltZSBQbGF5ZXIgKHNjcmVlbiByZWNvcmRpbmcpCg=="
 _AL_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCnpvaG8gYXNzaXN0OlpvaG8gQXNzaXN0CnJlYWx2bmM6UmVhbFZOQwp0aWdodHZuYzpUaWdodFZOQwp1bHRyYXZuYzpVbHRyYVZOQwptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb206Wm9vbQp3ZWJleDpXZWJleApza3lwZTpTa3lwZQpkaXNjb3JkOkRpc2NvcmQKc2xhY2s6U2xhY2sK"
 
 _b64decode() {
@@ -97,7 +97,8 @@ scan() {
 
   PS_OUT="$(ps -axo comm= 2>/dev/null)"
   [ -z "$PS_OUT" ] && PS_OUT="$(ps -eo comm= 2>/dev/null)"
-  PS_OUT_LOWER="$(echo "$PS_OUT" | grep -vi '/system/library/' | tr '[:upper:]' '[:lower:]')"
+  PS_ARGS="$(ps -eo args= 2>/dev/null)"
+  PS_OUT_LOWER="$(printf '%s\n%s\n' "$PS_OUT" "$PS_ARGS" | grep -vi '/system/library/' | tr '[:upper:]' '[:lower:]')"
 
   if [ -z "$PS_OUT" ]; then
     VIOLATIONS+=("Could not enumerate running processes - check is inconclusive, do not treat as PASS")
@@ -228,7 +229,8 @@ if [ "$PASSED" = false ] && [ -r /dev/tty ] && { [ "${#FIXABLE_PROC_PATTERNS[@]}
         still_running=""
         new_ps="$(ps -axo comm= 2>/dev/null)"
         [ -z "$new_ps" ] && new_ps="$(ps -eo comm= 2>/dev/null)"
-        echo "$new_ps" | grep -vi '/system/library/' | grep -qiw "$pattern" && still_running=1
+        new_ps_args="$(ps -eo args= 2>/dev/null)"
+        printf '%s\n%s\n' "$new_ps" "$new_ps_args" | grep -vi '/system/library/' | grep -qiw "$pattern" && still_running=1
         [ -z "$still_running" ] && break
         attempt=$((attempt + 1))
       done

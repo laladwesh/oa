@@ -34,7 +34,7 @@ function Decode-Labels($b64) {
   return $table
 }
 
-$processLabels = Decode-Labels "dGVhbXZpZXdlcj1UZWFtVmlld2VyCmFueWRlc2s9QW55RGVzawpyZW1vdGluZ19ob3N0PUNocm9tZSBSZW1vdGUgRGVza3RvcApzcGxhc2h0b3A9U3BsYXNodG9wCnJ1c3RkZXNrPVJ1c3REZXNrCnBhcnNlYz1QYXJzZWMKbG9nbWVpbj1Mb2dNZUluCmcyY29tbT1Hb1RvTXlQQwpnMnN2Yz1Hb1RvTXlQQwp6YXNlcnZpY2U9Wm9obyBBc3Npc3QKdm5jc2VydmVyPVZOQwp3aW52bmM9Vk5DCnR2bnNlcnZlcj1UaWdodFZOQwp1bHRyYXZuYz1VbHRyYVZOQwp2bmN2aWV3ZXI9Vk5DCm1zdHNjPVJlbW90ZSBEZXNrdG9wIENvbm5lY3Rpb24gKGNsaWVudCkKcXVpY2thc3Npc3Q9TWljcm9zb2Z0IFF1aWNrIEFzc2lzdAp6b29tPVpvb20Kd2ViZXhtdGE9V2ViZXgKYXRtZ3I9V2ViZXgKc2t5cGU9U2t5cGUKZGlzY29yZD1EaXNjb3JkCnNsYWNrPVNsYWNr"
+$processLabels = Decode-Labels "dGVhbXZpZXdlcj1UZWFtVmlld2VyCnRlYW12aWV3ZXJfc2VydmljZT1UZWFtVmlld2VyCmFueWRlc2s9QW55RGVzawphbnlkZXNrX3NlcnZpY2U9QW55RGVzawpyZW1vdGluZ19ob3N0PUNocm9tZSBSZW1vdGUgRGVza3RvcApyZW1vdGluZ19tZTJtZV9ob3N0PUNocm9tZSBSZW1vdGUgRGVza3RvcApzcGxhc2h0b3A9U3BsYXNodG9wCnJ1c3RkZXNrPVJ1c3REZXNrCnBhcnNlYz1QYXJzZWMKbG9nbWVpbj1Mb2dNZUluCmcyY29tbT1Hb1RvTXlQQwpnMnN2Yz1Hb1RvTXlQQwp6YXNlcnZpY2U9Wm9obyBBc3Npc3QKdm5jc2VydmVyPVZOQwp3aW52bmM9Vk5DCnR2bnNlcnZlcj1UaWdodFZOQwp1bHRyYXZuYz1VbHRyYVZOQwp2bmN2aWV3ZXI9Vk5DCm1zdHNjPVJlbW90ZSBEZXNrdG9wIENvbm5lY3Rpb24gKGNsaWVudCkKcXVpY2thc3Npc3Q9TWljcm9zb2Z0IFF1aWNrIEFzc2lzdAp6b29tPVpvb20Kd2ViZXhtdGE9V2ViZXgKYXRtZ3I9V2ViZXgKc2t5cGU9U2t5cGUKZGlzY29yZD1EaXNjb3JkCnNsYWNrPVNsYWNr"
 
 $appLabels = Decode-Labels "dGVhbXZpZXdlcj1UZWFtVmlld2VyCmFueWRlc2s9QW55RGVzawpzcGxhc2h0b3A9U3BsYXNodG9wCnJ1c3RkZXNrPVJ1c3REZXNrCnBhcnNlYz1QYXJzZWMKbG9nbWVpbj1Mb2dNZUluCmdvdG9teXBjPUdvVG9NeVBDCnpvaG8gYXNzaXN0PVpvaG8gQXNzaXN0CnJlYWx2bmM9UmVhbFZOQwp0aWdodHZuYz1UaWdodFZOQwp1bHRyYXZuYz1VbHRyYVZOQwptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A9TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb209Wm9vbQp3ZWJleD1XZWJleApza3lwZT1Ta3lwZQpkaXNjb3JkPURpc2NvcmQKc2xhY2s9U2xhY2s="
 
@@ -58,11 +58,11 @@ function Get-Scan {
   } else {
     foreach ($key in $processLabels.Keys) {
       $pattern = "\b$([regex]::Escape($key))\b"
-      $matches = @($procs | Where-Object { $_.ProcessName.ToLower() -match $pattern })
-      if ($matches.Count -gt 0) {
+      $hits = @($procs | Where-Object { $_.ProcessName.ToLower() -match $pattern })
+      if ($hits.Count -gt 0) {
         $label = "$($processLabels[$key]) (process running)"
         $violations.Add($label)
-        $fixable[$label] = @{ kind = "process"; names = @($matches | Select-Object -ExpandProperty ProcessName -Unique); pattern = $pattern }
+        $fixable[$label] = @{ kind = "process"; names = @($hits | Select-Object -ExpandProperty ProcessName -Unique); pattern = $pattern }
       }
     }
   }
