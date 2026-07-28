@@ -1,10 +1,19 @@
-#!/usr/bin/env bash
-# CCD OA environment check (macOS / Linux)
-# Read-only scan by default. Only touches the machine if the candidate
-# explicitly opts into the fix-it prompt below (defaults to No).
-# Uses plain indexed arrays throughout (no `declare -A`) so this also runs
-# on macOS's stock /bin/bash 3.2, which has no associative-array support.
 set -u
+
+shopt -s expand_aliases 2>/dev/null
+alias grep='command grep'
+alias ps='command ps'
+alias ls='command ls'
+alias tr='command tr'
+alias launchctl='command launchctl'
+alias pkill='command pkill'
+alias osascript='command osascript'
+alias basename='command basename'
+alias curl='command curl'
+alias mv='command mv'
+alias sudo='command sudo'
+alias printf='command printf'
+alias head='command head'
 
 REPORT_URL="${OA_REPORT_URL:-__REPORT_URL__}"
 OS_NAME="$(uname -s)"
@@ -19,12 +28,6 @@ _send_report() {
   fi
 }
 
-# Hard environment check: this script only means anything on real macOS or
-# native Linux. WSL (Windows Subsystem for Linux) runs bash just fine but is
-# sandboxed away from the real Windows host's processes - a candidate running
-# this inside WSL on Windows would get a false PASS while actual
-# remote-access tools running natively on Windows stay completely invisible.
-# Same idea for MSYS/Cygwin/Git-Bash-on-Windows (uname reports MINGW*/CYGWIN*).
 _is_wsl=false
 if [ -f /proc/version ] && grep -qi "microsoft\|wsl" /proc/version 2>/dev/null; then
   _is_wsl=true
@@ -63,13 +66,9 @@ if [ "$_is_wsl" = true ]; then
   exit 1
 fi
 
-# The actual list of checked apps isn't kept as plain text in this file -
-# base64-encoded below, decoded at runtime. This does not stop someone who
-# deliberately decodes it (`base64 -d`), only casual reading of a curl'd file.
 _PP_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpyZW1vdGluZ19ob3N0OkNocm9tZSBSZW1vdGUgRGVza3RvcApzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCmcyY29tbTpHb1RvTXlQQwp6b2hvYXNzaXN0OlpvaG8gQXNzaXN0CnZuY3NlcnZlcjpWTkMKdm5jdmlld2VyOlZOQwp3aW52bmM6Vk5DCnRpZ2h0dm5jOlRpZ2h0Vk5DCnVsdHJhdm5jOlVsdHJhVk5DCnJlYWx2bmM6UmVhbFZOQwphcmRhZ2VudDpBcHBsZSBSZW1vdGUgRGVza3RvcApzY3JlZW5zaGFyaW5nZDptYWNPUyBTY3JlZW4gU2hhcmluZyAoYWN0aXZlKQpzc2hkOlJlbW90ZSBMb2dpbiAvIFNTSAptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb20udXM6Wm9vbQp6b29tY3B0c3ZjOlpvb20Kd2ViZXg6V2ViZXgKcHRyZWNvcmRlcjpXZWJleApza3lwZTpTa3lwZQpkaXNjb3JkOkRpc2NvcmQKc2xhY2s6U2xhY2sKcXVpY2t0aW1lIHBsYXllcjpRdWlja1RpbWUgUGxheWVyIChzY3JlZW4gcmVjb3JkaW5nKQo="
 _AL_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCnpvaG8gYXNzaXN0OlpvaG8gQXNzaXN0CnJlYWx2bmM6UmVhbFZOQwp0aWdodHZuYzpUaWdodFZOQwp1bHRyYXZuYzpVbHRyYVZOQwptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb206Wm9vbQp3ZWJleDpXZWJleApza3lwZTpTa3lwZQpkaXNjb3JkOkRpc2NvcmQKc2xhY2s6U2xhY2sK"
 
-# base64 -d is GNU (Linux); macOS/BSD base64 uses -D. Try both.
 _b64decode() {
   local out
   out="$(printf '%s' "$1" | base64 -d 2>/dev/null)"
@@ -91,10 +90,6 @@ done <<EOF
 $(_b64decode "$_AL_B64")
 EOF
 
-# Populates the global VIOLATIONS array. FIXABLE_PROC_PATTERNS collects the
-# raw process-name patterns worth killing; FIXABLE_APP_NAMES collects the
-# actual /Applications folder names worth trashing (real case, not the
-# lowercased match key).
 scan() {
   VIOLATIONS=()
   FIXABLE_PROC_PATTERNS=()
@@ -139,22 +134,11 @@ scan() {
       fi
     done
 
-    # UNVERIFIED on real hardware: catches Screen Sharing/SSH enabled but
-    # idle (not just mid-connection), by checking launchd state directly
-    # instead of just the process list. If students report false FAILs with
-    # "macOS Screen Sharing is enabled" or "Remote Login / SSH is enabled"
-    # as the only violation, and they've confirmed the setting is actually
-    # OFF, this is the first place to check - see conversation history for
-    # why this is flagged.
     if command -v launchctl >/dev/null 2>&1; then
       _ss_state="$(launchctl print system/com.apple.screensharing 2>/dev/null)"
       if echo "$_ss_state" | grep -qE "state = (running|waiting)"; then
         VIOLATIONS+=("macOS Screen Sharing is enabled in System Settings")
       fi
-      # Remote Login (SSH) is also socket-activated on macOS - the sshd
-      # process check above only catches an active connection, same gap as
-      # Screen Sharing had. Check whether it's enabled at all, not just
-      # mid-session right now.
       _ssh_state="$(launchctl print system/com.openssh.sshd 2>/dev/null)"
       if echo "$_ssh_state" | grep -qE "state = (running|waiting)"; then
         already_ssh=0
@@ -200,11 +184,6 @@ print_banner() {
 scan
 print_banner
 
-# Many remote-access tools install a macOS LaunchAgent/LaunchDaemon that
-# auto-relaunches the app the instant it's killed - that's specifically why
-# they behave that way, so the remote session survives a manual force-quit.
-# A plain `pkill` alone won't stick; the watchdog has to be disabled first
-# or the process just comes back.
 disable_launch_items() {
   local pattern="$1"
   local dir domain plist base
@@ -242,10 +221,6 @@ if [ "$PASSED" = false ] && [ -r /dev/tty ] && { [ "${#FIXABLE_PROC_PATTERNS[@]}
       if [ "$OS_NAME" = "Darwin" ]; then
         disable_launch_items "$pattern"
       fi
-      # Some apps relaunch themselves within a second or two via a
-      # helper/updater/tray process even with no LaunchAgent involved. A
-      # single kill can lose that race, so kill-and-recheck a few times
-      # instead of trusting one shot.
       attempt=0
       while [ "$attempt" -lt 4 ]; do
         pkill -9 -i -f "$pattern" 2>/dev/null || true
@@ -281,18 +256,11 @@ echo "tools (Google Meet, Whereby, etc.) cannot be reliably checked from the"
 echo "command line and are NOT covered by this automated check."
 echo ""
 
-# Anonymous aggregate ping only: platform + pass/fail. No violation details,
-# no identity, no files are ever sent.
 if command -v curl >/dev/null 2>&1; then
   BODY=$(printf '{"platform":"%s","passed":%s}' "$OS_NAME" "$PASSED")
   curl -s -m 5 -X POST -H "Content-Type: application/json" -d "$BODY" "$REPORT_URL" >/dev/null 2>&1 || true
 fi
 
-# Keep the window open so the invigilator has time to read the banner,
-# instead of it vanishing the instant the script finishes (e.g. when
-# launched via a double-clickable script or a Terminal profile that closes
-# on exit). Skipped if there's no real interactive terminal attached, so
-# this never hangs a non-interactive run.
 if [ -r /dev/tty ]; then
   read -p "Press Enter to close this window... " -r _ < /dev/tty || true
 fi

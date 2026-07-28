@@ -1,13 +1,5 @@
-# CCD OA environment check (Windows)
-# Read-only scan by default. Only touches the machine if the candidate
-# explicitly opts into the fix-it prompt below (defaults to No).
 $ReportUrl = if ($env:OA_REPORT_URL) { $env:OA_REPORT_URL } else { "__REPORT_URL__" }
 
-# Hard environment check: PowerShell itself runs cross-platform (PowerShell
-# Core on Mac/Linux), so this script could technically execute somewhere its
-# Windows registry/RDP checks silently no-op - meaningless result. $IsWindows
-# only exists in PowerShell 6+; on Windows PowerShell 5.1 (the common case)
-# it's absent, so default to true there since 5.1 only ever runs on Windows.
 $isWinPlatform = $true
 if (Test-Path Variable:IsWindows) { $isWinPlatform = $IsWindows }
 if (-not $isWinPlatform) {
@@ -30,9 +22,6 @@ if (-not $isWinPlatform) {
   exit 1
 }
 
-# The actual list of checked apps isn't kept as plain text in this file -
-# base64-encoded below, decoded at runtime. This does not stop someone who
-# deliberately decodes it, only casual reading of a curl'd/downloaded file.
 function Decode-Labels($b64) {
   $text = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($b64))
   $table = @{}
@@ -57,7 +46,6 @@ $uninstallPaths = @(
 
 function Get-Scan {
   $violations = New-Object System.Collections.Generic.List[string]
-  # label -> { kind, matchedProcessNames / uninstallString }
   $fixable = @{}
 
   $procs = @()
@@ -157,11 +145,6 @@ if (-not $passed -and $scan.fixable.Count -gt 0) {
       Write-Host "Fixing: $label" -ForegroundColor Yellow
       switch ($fix.kind) {
         "process" {
-          # Some apps relaunch themselves within a second or two via a
-          # helper/updater/tray process. A single kill can lose that race,
-          # so kill-and-recheck a few times instead of trusting one shot.
-          # Also disables any matching Scheduled Task, since some installers
-          # register one for background updates/relaunch.
           try {
             Get-ScheduledTask -ErrorAction Stop | Where-Object { $_.TaskName -match $fix.pattern } | ForEach-Object {
               Disable-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath -ErrorAction SilentlyContinue | Out-Null
@@ -215,18 +198,12 @@ Write-Host "settings on THIS machine were inspected. No files, codebase, or pers
 Write-Host "data are read, uploaded, or stored."
 Write-Host ""
 
-# Anonymous aggregate ping only: platform + pass/fail. No violation details,
-# no identity, no files are ever sent.
 try {
   $bodyObj = @{ platform = "Windows"; passed = $passed }
   $json = $bodyObj | ConvertTo-Json -Compress
   Invoke-RestMethod -Uri $ReportUrl -Method Post -Body $json -ContentType "application/json" -TimeoutSec 5 | Out-Null
 } catch {}
 
-# Keep the window open so the invigilator has time to read the banner,
-# instead of it vanishing the instant the script finishes (e.g. when
-# launched via a shortcut/batch file without -NoExit). Skipped if there's
-# no real interactive console attached, so this never hangs a non-interactive run.
 if (-not [Console]::IsInputRedirected) {
   Write-Host "Press Enter to close this window..." -ForegroundColor Gray
   Read-Host | Out-Null
