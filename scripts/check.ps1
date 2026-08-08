@@ -34,7 +34,7 @@ function Decode-Labels($b64) {
   return $table
 }
 
-$processLabels = Decode-Labels "dGVhbXZpZXdlcj1UZWFtVmlld2VyCnRlYW12aWV3ZXJfc2VydmljZT1UZWFtVmlld2VyCmFueWRlc2s9QW55RGVzawphbnlkZXNrX3NlcnZpY2U9QW55RGVzawpyZW1vdGluZ19ob3N0PUNocm9tZSBSZW1vdGUgRGVza3RvcApyZW1vdGluZ19tZTJtZV9ob3N0PUNocm9tZSBSZW1vdGUgRGVza3RvcApzcGxhc2h0b3A9U3BsYXNodG9wCnJ1c3RkZXNrPVJ1c3REZXNrCnBhcnNlYz1QYXJzZWMKbG9nbWVpbj1Mb2dNZUluCmcyY29tbT1Hb1RvTXlQQwpnMnN2Yz1Hb1RvTXlQQwp6YXNlcnZpY2U9Wm9obyBBc3Npc3QKdm5jc2VydmVyPVZOQwp3aW52bmM9Vk5DCnR2bnNlcnZlcj1UaWdodFZOQwp1bHRyYXZuYz1VbHRyYVZOQwp2bmN2aWV3ZXI9Vk5DCm1zdHNjPVJlbW90ZSBEZXNrdG9wIENvbm5lY3Rpb24gKGNsaWVudCkKcXVpY2thc3Npc3Q9TWljcm9zb2Z0IFF1aWNrIEFzc2lzdAp6b29tPVpvb20Kd2ViZXhtdGE9V2ViZXgKYXRtZ3I9V2ViZXgKc2t5cGU9U2t5cGUKZGlzY29yZD1EaXNjb3JkCnNsYWNrPVNsYWNr"
+$processLabels = Decode-Labels "dGVhbXZpZXdlcj1UZWFtVmlld2VyCnRlYW12aWV3ZXJfc2VydmljZT1UZWFtVmlld2VyCmFueWRlc2s9QW55RGVzawphbnlkZXNrX3NlcnZpY2U9QW55RGVzawpyZW1vdGluZ19ob3N0PUNocm9tZSBSZW1vdGUgRGVza3RvcApyZW1vdGluZ19tZTJtZV9ob3N0PUNocm9tZSBSZW1vdGUgRGVza3RvcApzcGxhc2h0b3A9U3BsYXNodG9wCnJ1c3RkZXNrPVJ1c3REZXNrCnBhcnNlYz1QYXJzZWMKbG9nbWVpbj1Mb2dNZUluCmcyY29tbT1Hb1RvTXlQQwpnMnN2Yz1Hb1RvTXlQQwp6YXNlcnZpY2U9Wm9obyBBc3Npc3QKdm5jc2VydmVyPVZOQwp3aW52bmM9Vk5DCnR2bnNlcnZlcj1UaWdodFZOQwp1bHRyYXZuYz1VbHRyYVZOQwp2bmN2aWV3ZXI9Vk5DCm1zdHNjPVJlbW90ZSBEZXNrdG9wIENvbm5lY3Rpb24gKGNsaWVudCkKcXVpY2thc3Npc3Q9TWljcm9zb2Z0IFF1aWNrIEFzc2lzdAp6b29tPVpvb20Kd2ViZXhtdGE9V2ViZXgKYXRtZ3I9V2ViZXgKc2t5cGU9U2t5cGUKZGlzY29yZD1EaXNjb3JkCnNsYWNrPVNsYWNrCmxvb209TG9vbQpzY3JlZW5sZWFwPVNjcmVlbmxlYXA="
 
 $appLabels = Decode-Labels "dGVhbXZpZXdlcj1UZWFtVmlld2VyCmFueWRlc2s9QW55RGVzawpzcGxhc2h0b3A9U3BsYXNodG9wCnJ1c3RkZXNrPVJ1c3REZXNrCnBhcnNlYz1QYXJzZWMKbG9nbWVpbj1Mb2dNZUluCmdvdG9teXBjPUdvVG9NeVBDCnpvaG8gYXNzaXN0PVpvaG8gQXNzaXN0CnJlYWx2bmM9UmVhbFZOQwp0aWdodHZuYz1UaWdodFZOQwp1bHRyYXZuYz1VbHRyYVZOQwptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A9TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb209Wm9vbQp3ZWJleD1XZWJleApza3lwZT1Ta3lwZQpkaXNjb3JkPURpc2NvcmQKc2xhY2s9U2xhY2s="
 
@@ -104,6 +104,34 @@ function Get-Scan {
       $label = "Remote Assistance is enabled on this PC"
       $violations.Add($label)
       $fixable[$label] = @{ kind = "remote-assistance" }
+    }
+  } catch {}
+
+  try {
+    $safeNames = @("dwm", "explorer", "shellexperiencehost", "searchhost", "textinputhost", "applicationframehost")
+    $sample1 = (Get-Counter '\GPU Engine(*)\Utilization Percentage' -ErrorAction Stop).CounterSamples |
+      Where-Object { $_.InstanceName -match 'engtype_videoencode' }
+    Start-Sleep -Milliseconds 800
+    $sample2 = (Get-Counter '\GPU Engine(*)\Utilization Percentage' -ErrorAction Stop).CounterSamples |
+      Where-Object { $_.InstanceName -match 'engtype_videoencode' }
+    $flaggedPids = @{}
+    foreach ($s2 in $sample2) {
+      if ($s2.InstanceName -notmatch 'pid_(\d+)') { continue }
+      $encPid = $matches[1]
+      $s1 = $sample1 | Where-Object { $_.InstanceName -eq $s2.InstanceName } | Select-Object -First 1
+      if (-not $s1) { continue }
+      $avg = ($s1.CookedValue + $s2.CookedValue) / 2
+      if ($avg -gt 15 -and -not $flaggedPids.ContainsKey($encPid)) {
+        try {
+          $procName = (Get-Process -Id $encPid -ErrorAction Stop).ProcessName
+          if ($safeNames -notcontains $procName.ToLower()) {
+            $flaggedPids[$encPid] = $procName
+          }
+        } catch {}
+      }
+    }
+    foreach ($encPid in $flaggedPids.Keys) {
+      $violations.Add("Sustained video-encode GPU activity in '$($flaggedPids[$encPid])' (PID $encPid) - possible active screen-share/streaming regardless of app name")
     }
   } catch {}
 

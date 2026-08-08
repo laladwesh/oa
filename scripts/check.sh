@@ -66,7 +66,7 @@ if [ "$_is_wsl" = true ]; then
   exit 1
 fi
 
-_PP_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCnRlYW12aWV3ZXJkOlRlYW1WaWV3ZXIKdGVhbXZpZXdlcl9zZXJ2aWNlOlRlYW1WaWV3ZXIKYW55ZGVzazpBbnlEZXNrCmFueWRlc2tfc2VydmljZTpBbnlEZXNrCnJlbW90aW5nX2hvc3Q6Q2hyb21lIFJlbW90ZSBEZXNrdG9wCnJlbW90aW5nX21lMm1lX2hvc3Q6Q2hyb21lIFJlbW90ZSBEZXNrdG9wCnNwbGFzaHRvcDpTcGxhc2h0b3AKcnVzdGRlc2s6UnVzdERlc2sKcGFyc2VjOlBhcnNlYwpsb2dtZWluOkxvZ01lSW4KZ290b215cGM6R29Ub015UEMKZzJjb21tOkdvVG9NeVBDCnpvaG9hc3Npc3Q6Wm9obyBBc3Npc3QKdm5jc2VydmVyOlZOQwp2bmN2aWV3ZXI6Vk5DCndpbnZuYzpWTkMKdGlnaHR2bmM6VGlnaHRWTkMKdWx0cmF2bmM6VWx0cmFWTkMKcmVhbHZuYzpSZWFsVk5DCmFyZGFnZW50OkFwcGxlIFJlbW90ZSBEZXNrdG9wCnNjcmVlbnNoYXJpbmdkOm1hY09TIFNjcmVlbiBTaGFyaW5nIChhY3RpdmUpCnNzaGQ6UmVtb3RlIExvZ2luIC8gU1NICm1pY3Jvc29mdCByZW1vdGUgZGVza3RvcDpNaWNyb3NvZnQgUmVtb3RlIERlc2t0b3AKem9vbS51czpab29tCnpvb21jcHRzdmM6Wm9vbQp3ZWJleDpXZWJleApwdHJlY29yZGVyOldlYmV4CnNreXBlOlNreXBlCmRpc2NvcmQ6RGlzY29yZApzbGFjazpTbGFjawpxdWlja3RpbWUgcGxheWVyOlF1aWNrVGltZSBQbGF5ZXIgKHNjcmVlbiByZWNvcmRpbmcpCg=="
+_PP_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCnRlYW12aWV3ZXJkOlRlYW1WaWV3ZXIKdGVhbXZpZXdlcl9zZXJ2aWNlOlRlYW1WaWV3ZXIKYW55ZGVzazpBbnlEZXNrCmFueWRlc2tfc2VydmljZTpBbnlEZXNrCnJlbW90aW5nX2hvc3Q6Q2hyb21lIFJlbW90ZSBEZXNrdG9wCnJlbW90aW5nX21lMm1lX2hvc3Q6Q2hyb21lIFJlbW90ZSBEZXNrdG9wCnNwbGFzaHRvcDpTcGxhc2h0b3AKcnVzdGRlc2s6UnVzdERlc2sKcGFyc2VjOlBhcnNlYwpsb2dtZWluOkxvZ01lSW4KZ290b215cGM6R29Ub015UEMKZzJjb21tOkdvVG9NeVBDCnpvaG9hc3Npc3Q6Wm9obyBBc3Npc3QKdm5jc2VydmVyOlZOQwp2bmN2aWV3ZXI6Vk5DCndpbnZuYzpWTkMKdGlnaHR2bmM6VGlnaHRWTkMKdWx0cmF2bmM6VWx0cmFWTkMKcmVhbHZuYzpSZWFsVk5DCmFyZGFnZW50OkFwcGxlIFJlbW90ZSBEZXNrdG9wCnNjcmVlbnNoYXJpbmdkOm1hY09TIFNjcmVlbiBTaGFyaW5nIChhY3RpdmUpCnNzaGQ6UmVtb3RlIExvZ2luIC8gU1NICm1pY3Jvc29mdCByZW1vdGUgZGVza3RvcDpNaWNyb3NvZnQgUmVtb3RlIERlc2t0b3AKem9vbS51czpab29tCnpvb21jcHRzdmM6Wm9vbQp3ZWJleDpXZWJleApwdHJlY29yZGVyOldlYmV4CnNreXBlOlNreXBlCmRpc2NvcmQ6RGlzY29yZApzbGFjazpTbGFjawpxdWlja3RpbWUgcGxheWVyOlF1aWNrVGltZSBQbGF5ZXIgKHNjcmVlbiByZWNvcmRpbmcpCmdldHNjcmVlbjpHZXRTY3JlZW4ubWUKdG9kZXNrOlRvRGVzawp0b2Rlc2tfc2VydmljZTpUb0Rlc2sKYWVyb2FkbWluOkFlcm9BZG1pbgpzdXByZW1vOlN1cHJlbW8Kc3VwcmVtb2hlbHBlcjpTdXByZW1vCnN1cHJlbW9zZXJ2aWNlOlN1cHJlbW8Kc3VwcmVtb3N5c3RlbTpTdXByZW1vCnVsdHJhdmlld2VyOlVsdHJhVmlld2VyCnVsdHJhdmlld2VyX2Rlc2t0b3A6VWx0cmFWaWV3ZXIKdWx0cmF2aWV3ZXJfc2VydmljZTpVbHRyYVZpZXdlcgpkd2Fnc3ZjOkRXIFNlcnZpY2UKZHdhZ2VudDpEVyBTZXJ2aWNlCmR3YWdsbmM6RFcgU2VydmljZQpzaG93bXlwYzpTaG93TXlQQwpzbXBjc2V0dXA6U2hvd015UEMKcnNlcnZlcjM6UkFkbWluCnJhZG1pbjpSQWRtaW4KcGNpY3RsdWk6TmV0U3VwcG9ydCBNYW5hZ2VyCnBjaWNmZ3VpOk5ldFN1cHBvcnQgTWFuYWdlcgpyZW1jbWRzdHViOk5ldFN1cHBvcnQgTWFuYWdlcgpob3B0b2Rlc2s6SG9wVG9EZXNrCnJlbW90ZXBjOlJlbW90ZVBDCnJlbW90ZXBjc2VydmljZTpSZW1vdGVQQwpyZW1vdGVwY2hvc3Q6UmVtb3RlUEMKcnBjc3VpdGU6UmVtb3RlUEMKbWlrb2dvOk1pa29nbwpvcmF5cmVtb3Rlc2hlbGw6U3VuTG9naW4Kb3JheXJlbW90ZXNlcnZpY2U6U3VuTG9naW4Kc3VubG9naW46U3VuTG9naW4KYW1teXk6QW1teXkgQWRtaW4KYWFfdjM6QW1teXkgQWRtaW4KbG9vbTpMb29tCnNjcmVlbmxlYXA6U2NyZWVubGVhcAo="
 _AL_B64="dGVhbXZpZXdlcjpUZWFtVmlld2VyCmFueWRlc2s6QW55RGVzawpzcGxhc2h0b3A6U3BsYXNodG9wCnJ1c3RkZXNrOlJ1c3REZXNrCnBhcnNlYzpQYXJzZWMKbG9nbWVpbjpMb2dNZUluCmdvdG9teXBjOkdvVG9NeVBDCnpvaG8gYXNzaXN0OlpvaG8gQXNzaXN0CnJlYWx2bmM6UmVhbFZOQwp0aWdodHZuYzpUaWdodFZOQwp1bHRyYXZuYzpVbHRyYVZOQwptaWNyb3NvZnQgcmVtb3RlIGRlc2t0b3A6TWljcm9zb2Z0IFJlbW90ZSBEZXNrdG9wCnpvb206Wm9vbQp3ZWJleDpXZWJleApza3lwZTpTa3lwZQpkaXNjb3JkOkRpc2NvcmQKc2xhY2s6U2xhY2sK"
 
 _b64decode() {
@@ -149,6 +149,34 @@ scan() {
           done
         fi
         [ "$already_ssh" -eq 0 ] && VIOLATIONS+=("Remote Login / SSH is enabled in System Settings")
+      fi
+    fi
+
+    _TCC_DB="$HOME/Library/Application Support/com.apple.TCC/TCC.db"
+    if command -v sqlite3 >/dev/null 2>&1 && [ -r "$_TCC_DB" ]; then
+      _screen_apps="$(sqlite3 "$_TCC_DB" "SELECT client FROM access WHERE service='kTCCServiceScreenCapture' AND auth_value=2" 2>/dev/null)"
+      _access_apps="$(sqlite3 "$_TCC_DB" "SELECT client FROM access WHERE service='kTCCServiceAccessibility' AND auth_value=2" 2>/dev/null)"
+      if [ -n "$_screen_apps" ] && [ -n "$_access_apps" ]; then
+        _both_apps="$(comm -12 <(echo "$_screen_apps" | sort -u) <(echo "$_access_apps" | sort -u) 2>/dev/null)"
+        if [ -n "$_both_apps" ]; then
+          while IFS= read -r _app_id; do
+            [ -z "$_app_id" ] && continue
+            case "$_app_id" in
+              com.apple.*) continue ;;
+            esac
+            VIOLATIONS+=("$_app_id has both Screen Recording and Accessibility permissions granted (remote-control capable, regardless of name)")
+          done <<< "$_both_apps"
+        fi
+      fi
+      if [ -n "$_screen_apps" ]; then
+        while IFS= read -r _app_id; do
+          [ -z "$_app_id" ] && continue
+          case "$_app_id" in
+            com.apple.Safari|com.google.Chrome*|org.mozilla.firefox*|com.microsoft.edgemac*|com.brave.Browser*|company.thebrowser.Browser|com.operasoftware.Opera*|com.vivaldi.Vivaldi)
+              VIOLATIONS+=("Browser '$_app_id' has Screen Recording permission granted - any website can request screen-share through it (e.g. Google Meet, Whereby) without installing anything")
+              ;;
+          esac
+        done <<< "$_screen_apps"
       fi
     fi
   fi
